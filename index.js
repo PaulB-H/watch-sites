@@ -6,7 +6,15 @@ const logFilePath = "watch-sites.log";
 
 const https = require("https");
 
-const requiredEnvVars = ["EMAIL_USER", "EMAIL_PASSWORD", "EMAIL_TO", "DOMAINS"];
+const requiredEnvVars = [
+  "SMTP_HOST",
+  "SMTP_PORT",
+  "SMTP_secure",
+  "EMAIL_USER",
+  "EMAIL_PASSWORD",
+  "EMAIL_TO",
+  "DOMAINS",
+];
 
 for (const envVar of requiredEnvVars) {
   if (!process.env[envVar]) {
