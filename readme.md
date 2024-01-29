@@ -12,10 +12,13 @@ Dependencies: `nodemailer`, `dotenv`
 
 1. `npm install`
 
-2. Create a `.env` file and add a list of domains to check, the email that will be used to send the message over NodeMailer/SMTP, email password, and email it should go to:
+2. Create a `.env` file and add a list of domains to check, SMTP Details (Host/Port/Secure), sending email address (EMAIL_USER), email password, and recipient email (EMAIL_TO). Secure should passed 0 for false or 1 for true. Note - Only pass true(1) if you are using port 465. Connections that support STARTTLS are upgraded to TLS using that protocol, so its not "insecure".
 
 ```
 DOMAINS=https://cloudflare.com,https://letsencrypt.org,https://developer.mozilla.org
+SMTP_HOST=smtp.email.com
+SMTP_PORT=587
+SMTP_SECURE=0
 EMAIL_USER=address@email.com
 EMAIL_PASSWORD=emailPass123
 EMAIL_TO=sendTo@email.com

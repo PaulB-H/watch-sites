@@ -20,7 +20,9 @@ const checkInterval = 60000;
 let remainingTime = checkInterval / 1000;
 
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: process.env.SMTP_HOST,
+  port: process.env.SMTP_PORT,
+  secure: parseInt(process.env.SMTP_SECURE),
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD,
