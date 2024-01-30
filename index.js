@@ -186,6 +186,19 @@ function logResult(statusCode, domain, responseTime) {
   });
 }
 
+function logHttpReqErr(code, hostname) {
+  const currentDate = new Date().toISOString();
+  const logEntry = `${code},${hostname},${currentDate},-1ms\n`;
+
+  fs.appendFile(logFilePath, logEntry, (err) => {
+    if (err) {
+      console.error(`Error writing to log file: ${err.message}`);
+    } else {
+      console.log(`Result logged for ${hostname}`);
+    }
+  });
+}
+
 async function checkAllWebsites() {
   const promises = domains.map((domain) => checkWebsite(domain));
 
@@ -198,10 +211,14 @@ function runChecks() {
   checkAllWebsites()
     .then((results) => {
       results.forEach((result) => {
-        if (result.requestFailure) {
-          const { domain, httpReqError } = result.reason;
+        if (result.status !== "fulfilled" && result.reason.requestFailure) {
+          const { hostname, code } = result.reason.httpReqError;
 
-          logResult(`REQERR: ${domain}`, `${httpReqError}`);
+          // Todo: How do we want to handle http request errors?
+          // Send email alert as well? Should it have its own template?
+          // Would we just batch this in with other errors if there are any?
+
+          logHttpReqErr(code, hostname);
         } else if (result.status === "fulfilled") {
           const { domain, statusCode, responseTime } = result.value;
 

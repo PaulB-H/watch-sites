@@ -62,6 +62,7 @@ Initially had code to give a more interactive feedback to the console (time rema
 - A header line in each log file with details about the log file itself?
   - Like time frame the log covers, number of entries, list of domains, but these things might be better for a log parser. Lets just make a header line with just the date period the log encompasses instead.
 - Log parser to query and display the data
+- How do we want to handle http request errors? Line 217
 
 ###### did
 
