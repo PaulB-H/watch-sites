@@ -84,7 +84,7 @@ async function checkWebsite(url) {
   });
 }
 
-function sendErrorEmail(domain, message) {
+function sendSingleErrorEmail(domain, message) {
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to: process.env.EMAIL_TO,
@@ -97,6 +97,32 @@ function sendErrorEmail(domain, message) {
       console.error(`Error sending email: ${error.message}`);
     } else {
       console.log(`Email sent for ${domain}: ${info.response}`);
+    }
+  });
+}
+
+function sendGroupedErrorEmail(failedResults) {
+  const subject = `ALERT: ${failedResults.length} site(s) failed`;
+  let body = "Failed websites:\n";
+
+  failedResults.forEach((result) => {
+    body += `${result.errorMessage}\n`;
+  });
+
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: process.env.EMAIL_TO,
+    subject: subject,
+    text: body,
+  };
+
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.error(`Error sending email: ${error.message}`);
+    } else {
+      console.log(
+        `Email sent for ${failedResults.length} failed sites: ${info.response}`
+      );
     }
   });
 }
@@ -148,6 +174,8 @@ async function checkAllWebsites() {
 }
 
 function runChecks() {
+  const failedResults = [];
+
   checkAllWebsites()
     .then((results) => {
       results.forEach((result) => {
@@ -162,10 +190,19 @@ function runChecks() {
 
           console.error(`Error for ${domain}: ${errorMessage}`);
 
-          sendErrorEmail(domain, errorMessage);
+          if (parseInt(process.env.SEND_GROUPED_MAIL)) {
+            failedResults.push({ domain, errorMessage });
+          } else {
+            sendSingleErrorEmail(domain, errorMessage);
+          }
+
           logResult(500, domain, responseTime);
         }
       });
+
+      if (failedResults.length > 0 && parseInt(process.env.SEND_GROUPED_MAIL)) {
+        sendGroupedErrorEmail(failedResults);
+      }
 
       remainingTime = checkInterval / 1000;
     })
