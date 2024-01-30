@@ -55,16 +55,13 @@ async function checkWebsite(url) {
       if (res.statusCode === 200) {
         resolve({
           domain: url,
-          status: "online",
           statusCode: res.statusCode,
           responseTime: responseTime,
         });
       } else {
-        const errorMessage = `${url} returned status code ${res.statusCode}`;
         reject({
           domain: url,
-          status: "offline",
-          errorMessage: errorMessage,
+          statusCode: res.statusCode,
           responseTime: responseTime,
         });
       }
@@ -84,12 +81,24 @@ async function checkWebsite(url) {
   });
 }
 
-function sendSingleErrorEmail(domain, message) {
+function sendSingleErrorEmail(domain, statusCode) {
+  const subject = `ALERT: ${domain} FAILED, CODE ${statusCode}`;
+
+  const dateString = new Date(Date.now()).toLocaleDateString();
+  const timeString = new Date(Date.now()).toLocaleTimeString();
+  const dateAndTimeString = `Date: ${dateString} - Time: ${timeString}`;
+
+  let body = "";
+
+  body += `${dateAndTimeString}\n\n`;
+
+  body += `Error for ${domain}: Status code: ${statusCode}\n`;
+
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to: process.env.EMAIL_TO,
-    subject: `Website Check Failure - ${domain}`,
-    text: message,
+    subject: subject,
+    text: body,
   };
 
   transporter.sendMail(mailOptions, (error, info) => {
@@ -102,11 +111,22 @@ function sendSingleErrorEmail(domain, message) {
 }
 
 function sendGroupedErrorEmail(failedResults) {
-  const subject = `ALERT: ${failedResults.length} site(s) failed`;
-  let body = "Failed websites:\n";
+  const subject = `ALERT: ${failedResults.length} site${
+    failedResults.length > 1 ? "s" : ""
+  } failed`;
+
+  const dateString = new Date(Date.now()).toLocaleDateString();
+  const timeString = new Date(Date.now()).toLocaleTimeString();
+  const dateAndTimeString = `Date: ${dateString} - Time: ${timeString}`;
+
+  let body = "";
+
+  body += `${dateAndTimeString}\n\n`;
+
+  body += "Failed websites:\n\n";
 
   failedResults.forEach((result) => {
-    body += `${result.errorMessage}\n`;
+    body += `Error for ${result.domain}: Status code: ${result.statusCode}\n`;
   });
 
   const mailOptions = {
@@ -186,17 +206,17 @@ function runChecks() {
 
           logResult(statusCode, domain, responseTime);
         } else {
-          const { domain, errorMessage, responseTime } = result.reason;
+          const { domain, statusCode, responseTime } = result.reason;
 
-          console.error(`Error for ${domain}: ${errorMessage}`);
+          console.error(`Error for ${domain}: Status code: ${statusCode}`);
 
           if (parseInt(process.env.SEND_GROUPED_MAIL)) {
-            failedResults.push({ domain, errorMessage });
+            failedResults.push({ domain, statusCode });
           } else {
-            sendSingleErrorEmail(domain, errorMessage);
+            sendSingleErrorEmail(domain, statusCode);
           }
 
-          logResult(500, domain, responseTime);
+          logResult(statusCode, domain, responseTime);
         }
       });
 
