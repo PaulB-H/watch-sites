@@ -69,12 +69,10 @@ async function checkWebsite(url) {
     });
 
     req.on("error", (error) => {
-      const responseTime = Date.now() - startTime;
       reject({
         domain: url,
-        status: "offline",
-        errorMessage: error.message,
-        responseTime: responseTime,
+        requestFailure: true,
+        httpReqError: error,
       });
     });
 
@@ -200,7 +198,11 @@ function runChecks() {
   checkAllWebsites()
     .then((results) => {
       results.forEach((result) => {
-        if (result.status === "fulfilled") {
+        if (result.requestFailure) {
+          const { domain, httpReqError } = result.reason;
+
+          logResult(`REQERR: ${domain}`, `${httpReqError}`);
+        } else if (result.status === "fulfilled") {
           const { domain, statusCode, responseTime } = result.value;
 
           console.log(`${domain} is online. Status code: ${statusCode}`);
